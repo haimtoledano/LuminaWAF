@@ -31,6 +31,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
     role = Column(Enum(UserRole), default=UserRole.viewer, nullable=False)
+    email = Column(String, nullable=True)
     mfa_secret = Column(String, nullable=True)
     mfa_enabled = Column(Boolean, default=False)
 

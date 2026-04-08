@@ -46,6 +46,9 @@ const App: React.FC = () => {
   
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [myNewPassword, setMyNewPassword] = useState('');
+  const [myPasswordMessage, setMyPasswordMessage] = useState('');
   const [activeServer, setActiveServer] = useState<any>(null);
 
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
@@ -283,6 +286,25 @@ const App: React.FC = () => {
     } catch(e) { console.error(e); }
   };
 
+  const handleChangeOwnPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetchWithAuth('http://localhost:8555/api/users/me/password', {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: myNewPassword })
+      });
+      if (!res.ok) {
+         const err = await res.json();
+         throw new Error(err.detail || "Failed to change password");
+      }
+      setMyPasswordMessage("Password changed successfully!");
+      setMyNewPassword('');
+      setTimeout(() => { setIsProfileModalOpen(false); setMyPasswordMessage(''); }, 2000);
+    } catch (err: any) {
+      setMyPasswordMessage("Error: " + err.message);
+    }
+  };
+
   if (!authToken) {
       return <LoginView onLogin={handleLogin} mfaRequired={needsMfaCode} errorMsg={loginError} />;
   }
@@ -312,6 +334,9 @@ const App: React.FC = () => {
               <Users className="w-5 h-5 flex-shrink-0 mr-2" /> Users
             </button>
           )}
+          <button onClick={() => setIsProfileModalOpen(true)} className="flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition bg-slate-800 text-slate-400 hover:text-white">
+            <User className="w-5 h-5 flex-shrink-0 mr-2" /> My Profile
+          </button>
           <button onClick={handleLogout} className="flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition bg-red-900/30 text-red-500 hover:bg-red-800 hover:text-white border border-red-500/30">
             <LogOut className="w-5 h-5 flex-shrink-0 mr-2" /> Logout
           </button>
@@ -737,6 +762,42 @@ const App: React.FC = () => {
                </div>
             </div>
             
+          </div>
+        </div>
+      )}
+
+      {/* Profile Modal */}
+      {isProfileModalOpen && (
+        <div className="fixed inset-0 backdrop-blur-md bg-black/60 flex justify-center items-center z-50">
+          <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl shadow-2xl w-full max-w-md relative">
+            <button onClick={() => setIsProfileModalOpen(false)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition">
+              <X className="w-6 h-6" />
+            </button>
+            <h2 className="text-2xl font-bold mb-2 flex items-center text-white">
+              <User className="w-8 h-8 mr-3 text-indigo-400" />
+              My Profile
+            </h2>
+            <p className="text-slate-400 mb-6">Manage your account security.</p>
+            
+            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 mb-6">
+              <p className="font-mono text-indigo-300">@{currentUser?.username}</p>
+              <p className="text-xs text-slate-500 uppercase font-bold mt-1">Role: {currentUser?.role}</p>
+            </div>
+
+            <form onSubmit={handleChangeOwnPassword} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-1">New Password</label>
+                <input type="password" value={myNewPassword} onChange={(e) => setMyNewPassword(e.target.value)} required minLength={4} className="w-full bg-slate-800 text-white p-3 rounded-lg outline-none focus:ring-2 ring-indigo-500 border border-slate-700" placeholder="Minimum 4 characters" />
+              </div>
+              <button type="submit" disabled={!myNewPassword} className="w-full bg-indigo-600 disabled:opacity-50 font-semibold text-white p-3 mt-2 rounded-lg hover:bg-indigo-500 transition shadow-[0_0_15px_rgba(79,70,229,0.4)]">
+                Update Password
+              </button>
+            </form>
+            {myPasswordMessage && (
+               <div className={`mt-4 p-3 rounded-lg text-sm text-center font-medium ${myPasswordMessage.includes('Error') ? 'bg-red-900/40 text-red-400 border border-red-500/30' : 'bg-green-900/40 text-green-400 border border-green-500/30'}`}>
+                 {myPasswordMessage}
+               </div>
+            )}
           </div>
         </div>
       )}
