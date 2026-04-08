@@ -107,7 +107,12 @@ This deploys the Envoy data-plane, Postgres database, logging workers, backend A
 1. Upon first run, the system bootstraps a superadmin. Navigate to `http://localhost:5173`.
 2. Initial credentials: `admin` / `CyberShield2026!`.
 3. You will be immediately prompted to link your Authenticator app via QR code.
-4. Begin mapping Virtual Servers and routing HTTP traffic through Envoy (Default Port mappings via Docker).
+
+### 🌐 Port Mapping Configuration
+CyberShield WAF intercepts traffic by acting as a reverse gateway between the Reverse Proxy and the target App.
+* **Default Allocation:** By default, the system is configured to listen on **10 incoming ports** (`8000` to `8009`). 
+* **1 App = 1 Dedicated Port:** You must assign a dedicated, unique listening port (e.g., `8001`) for each internal application you wish to protect and monitor.
+* **Expanding Capability:** If your infrastructure requires protecting more than 10 upstream applications, simply expand the listener port range in the `docker-compose.yml` file under the `envoy` service `ports` array (e.g., `"8000-8020:8000-8020"`).
 
 ## 📄 Licensing
 
