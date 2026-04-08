@@ -16,6 +16,7 @@
 * **Mandatory Multi-Factor Authentication (MFA)**: Uncompromising authentication flow ensuring robust protection of the control plane itself.
 * **Micro-second Envoy Proxy integration**: The backend translates UI configurations into Envoy's LDS/CDS mechanisms in real time.
 * **Bidirectional Custom Headers Integration**: Dynamically inject custom HTTP Request and Response headers seamlessly via Envoy's engine.
+* **Native DDoS Mitigation (Layer 7 Rate Limiting)**: Guard against flooding and brute-force by capping Requests Per Minute (RPM) independently for each requesting IP address using Envoy's native token bucket filter, saving WAF CPU cycles.
 
 ## 📸 Screenshots
 
@@ -39,6 +40,9 @@ Take precise control over edge configurations without ever touching raw configur
 
 **Exclusions & WAF Behavior Modes:**
 ![Exclusions & Status](assets/waf%20settings%20exclusions%20and%20waf%20status.png)
+
+**Native DDoS Protection (Per-IP Rate Limiting):**
+![DDoS Protection](assets/ddos.png)
 
 ### 🔍 Real-Time Diagnostics
 Review blocked packets, exact JSON payloads, and WAF intercepts organically.
