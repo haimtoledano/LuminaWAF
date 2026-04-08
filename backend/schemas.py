@@ -103,3 +103,9 @@ class AuditLogRead(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SystemStatsRead(BaseModel):
+    total_requests_24h: int
+    total_blocked_24h: int
+    active_virtual_servers: int
+    active_blacklisted_ips: int

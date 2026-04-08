@@ -629,6 +629,23 @@ def update_settings(settings: dict, db: Session = Depends(database.get_db), curr
 def get_audit_logs(limit: int = 200, db: Session = Depends(database.get_db), current_user: database.User = Depends(auth.require_admin)):
     return db.query(database.AuditLog).order_by(database.AuditLog.timestamp.desc()).limit(limit).all()
 
+from datetime import datetime, timedelta
+
+@app.get("/api/stats", response_model=schemas.SystemStatsRead)
+def get_system_stats(db: Session = Depends(database.get_db), current_user: database.User = Depends(auth.require_admin)):
+    time_24h_ago = datetime.utcnow() - timedelta(hours=24)
+    total_requests_24h = db.query(database.AccessLog).filter(database.AccessLog.timestamp >= time_24h_ago).count()
+    total_blocked_24h = db.query(database.AccessLog).filter(database.AccessLog.timestamp >= time_24h_ago, database.AccessLog.status_code.in_([403, 406, 429])).count()
+    active_virtual_servers = db.query(database.VirtualServer).filter(database.VirtualServer.active == True).count()
+    active_blacklisted_ips = db.query(database.IPRule).filter(database.IPRule.rule_type == 'Blacklist').count()
+    
+    return {
+        "total_requests_24h": total_requests_24h,
+        "total_blocked_24h": total_blocked_24h,
+        "active_virtual_servers": active_virtual_servers,
+        "active_blacklisted_ips": active_blacklisted_ips
+    }
+
 from pydantic import BaseModel
 class EmailPayload(BaseModel):
     vs_id: str

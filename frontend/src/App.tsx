@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Server, Activity, PlusCircle, X, Trash2, Shield, ShieldCheck, Terminal, ShieldAlert, ChevronDown, ChevronUp, AlertOctagon, LayoutTemplate, Cloud, Code, User, Users, Database, LogOut, Settings, ClipboardList } from 'lucide-react';
+import { Server, Activity, PlusCircle, X, Trash2, Shield, ShieldCheck, Terminal, ShieldAlert, ChevronDown, ChevronUp, AlertOctagon, LayoutTemplate, Cloud, Code, User, Users, Database, LogOut, Settings, ClipboardList, LayoutDashboard } from 'lucide-react';
 import { LoginView, MFASetupView } from './AuthViews';
 import UsersTab from './UsersTab';
 import IPRulesTab from './IPRulesTab';
 import SettingsTab from './SettingsTab';
 import AuditLogsTab from './AuditLogsTab';
+import DashboardTab from './DashboardTab';
 
 const ruleCategories = [
   { id: 'Protocol-Enforcement', label: 'Protocol Enforcement', desc: 'Enforces strict HTTP protocol standards.', icon: ShieldCheck },
@@ -33,7 +34,7 @@ const appCategories = [
 ];
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'servers'|'logs'|'users'|'ip_rules'|'settings'|'audit_logs'>('servers');
+  const [activeTab, setActiveTab] = useState<'dashboard'|'servers'|'logs'|'users'|'ip_rules'|'settings'|'audit_logs'>('dashboard');
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('waf_token'));
   const [currentUser, setCurrentUser] = useState<any>(JSON.parse(localStorage.getItem('waf_user') || 'null'));
   const [mfaSetupUri, setMfaSetupUri] = useState<string | null>(null);
@@ -317,7 +318,7 @@ const App: React.FC = () => {
   }
 
   const buttonStyle = (isActive: boolean) => 
-    `flex items-center px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md backdrop-blur-sm border ${
+    `flex items-center px-3 py-2 rounded-xl text-xs md:text-[13px] font-bold transition-all shadow-md backdrop-blur-sm border ${
       isActive 
       ? 'bg-indigo-600 border-indigo-500/50 text-white shadow-indigo-500/30 scale-105 z-10' 
       : 'bg-slate-800/60 border-slate-700/50 text-slate-400 hover:text-white hover:bg-slate-700 hover:scale-105'
@@ -331,8 +332,11 @@ const App: React.FC = () => {
          <h1 className="text-6xl md:text-[10rem] font-black tracking-widest text-white mt-10">CyberShield</h1>
       </div>
 
-      <div className="flex justify-center mb-8 w-full max-w-6xl border-b border-indigo-500/30 pb-6 pt-2 relative z-10 overflow-hidden">
-        <div className="flex space-x-3 overflow-x-auto whitespace-nowrap custom-scrollbar justify-start md:justify-center w-full pb-2 px-2">
+      <div className="flex justify-center mb-8 w-full border-b border-indigo-500/30 pb-6 pt-2 relative z-10 overflow-hidden">
+        <div className="flex space-x-2 overflow-x-auto whitespace-nowrap justify-start md:justify-center w-full pb-2 px-2 [&::-webkit-scrollbar]:hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+          <button onClick={() => setActiveTab('dashboard')} className={buttonStyle(activeTab === 'dashboard')}>
+            <LayoutDashboard className="w-4 h-4 mr-2" /> Overview
+          </button>
           <button onClick={() => setActiveTab('servers')} className={buttonStyle(activeTab === 'servers')}>
             <Server className="w-4 h-4 mr-2" /> Virtual Servers
           </button>
@@ -358,13 +362,15 @@ const App: React.FC = () => {
           <button onClick={() => setIsProfileModalOpen(true)} className={buttonStyle(false)}>
             <User className="w-4 h-4 mr-2" /> My Profile
           </button>
-          <button onClick={handleLogout} className="flex items-center px-4 py-2.5 rounded-xl text-sm font-bold transition-all shadow-md backdrop-blur-sm border bg-red-900/20 border-red-500/30 text-red-400 hover:bg-red-800 hover:text-white hover:scale-105">
+          <button onClick={handleLogout} className="flex items-center px-3 py-2 rounded-xl text-xs md:text-[13px] font-bold transition-all shadow-md backdrop-blur-sm border bg-red-900/20 border-red-500/30 text-red-400 hover:bg-red-800 hover:text-white hover:scale-105">
             <LogOut className="w-4 h-4 mr-2" /> Logout
           </button>
         </div>
       </div>
 
       <div className="w-full max-w-5xl relative z-10">
+        {activeTab === 'dashboard' && <DashboardTab authToken={authToken} />}
+
         {activeTab === 'servers' && (
           <div>
             <div className="flex justify-end mb-4">
