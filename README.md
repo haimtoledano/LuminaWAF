@@ -48,6 +48,38 @@ Review blocked packets, exact JSON payloads, and WAF intercepts organically.
 Manage user access and roles directly via the control plane.
 ![Users Management](assets/users.png)
 
+## 🏗️ System Architecture & Traffic Flow
+
+![CyberShield Architecture Flow](assets/flow.png)
+
+CyberShield is designed to sit internally, acting as the intelligent security gateway directly before your designated containerized applications. 
+
+```mermaid
+flowchart LR
+    Client((Client)) --> FW[Network Firewall]
+    FW --> RP[Reverse Proxy \n SSL Termination]
+    RP -- "Unencrypted Traffic" --> WAF
+
+    subgraph WAF_Node ["🛡️ CyberShield WAF"]
+        direction TB
+        Envoy[Envoy Proxy Engine]
+        Coraza[Coraza Threat Engine]
+        
+        Envoy <-->|Deep Packet Inspection| Coraza
+    end
+
+    WAF_Node -- "Port 8001" --> App1(Internal App 1)
+    WAF_Node -- "Port 8002" --> App2(Internal App 2)
+
+    App1 -. "Response" .-> WAF_Node
+    WAF_Node -. "Header Injection" .-> RP
+```
+
+1. **Edge Entry:** Traffic passes through the standard organization Firewall and terminates at a generic Reverse Proxy (like NGINX or Traefik) which handles SSL/TLS certificates.
+2. **Evaluation:** The proxy routes internal traffic to CyberShield (Envoy). Envoy passes the request to the Coraza WASM plugin for threat inspection based on application-specific ports.
+3. **Upstream Forwarding & Injection:** If the traffic is clean, Envoy forwards the request to the target app. It dynamically injects preconfigured **Request Headers**.
+4. **Return Path:** The application responds. CyberShield intercepts the payload, injects **Response Headers**, and routes it safely back to the user.
+
 ## 🛠️ Technology Stack
 
 | Layer       | Technologies                                   |
