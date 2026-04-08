@@ -1,9 +1,10 @@
 import os
-from sqlalchemy import create_engine, Column, String, Boolean, Enum, Integer, ForeignKey
+from sqlalchemy import create_engine, Column, String, Boolean, Enum, Integer, ForeignKey, DateTime
 from sqlalchemy.orm import declarative_base, relationship
 from sqlalchemy.orm import sessionmaker
 from enum import Enum as EEnum
 import uuid
+from sqlalchemy.sql import func
 
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://waf_admin:waf_password@db:5432/waf_db")
 
@@ -24,6 +25,18 @@ class HeaderDirection(str, EEnum):
 class UserRole(str, EEnum):
     admin = "admin"
     viewer = "viewer"
+
+class IPRuleType(str, EEnum):
+    Whitelist = "Whitelist"
+    Blacklist = "Blacklist"
+
+class IPRule(Base):
+    __tablename__ = "ip_rules"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    ip_address = Column(String, index=True, nullable=False, unique=True)
+    rule_type = Column(Enum(IPRuleType), nullable=False)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class User(Base):
     __tablename__ = "users"

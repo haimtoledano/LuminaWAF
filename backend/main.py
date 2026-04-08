@@ -15,8 +15,11 @@ app = FastAPI(title="WAF Control Plane API")
 
 import auth
 import users_router
+import ip_rules_router
+
 app.include_router(auth.auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(users_router.users_router, prefix="/api/users", tags=["users"])
+app.include_router(ip_rules_router.ip_rules_router)
 
 @app.on_event("startup")
 def startup_event():
@@ -66,7 +69,9 @@ def generate_cds(servers):
         cds["resources"].append(cluster)
     return yaml.dump(cds, sort_keys=False)
 
-def generate_lds(servers):
+def generate_lds(servers, blacklisted_ips=None, whitelisted_ips=None):
+    if blacklisted_ips is None: blacklisted_ips = []
+    if whitelisted_ips is None: whitelisted_ips = []
     lds = {"resources": []}
     for server in servers:
         request_headers = [
@@ -160,6 +165,25 @@ def generate_lds(servers):
         }
 
         http_filters = []
+        
+        if blacklisted_ips:
+            principals = [{"direct_remote_ip": {"address_prefix": ip, "prefix_len": 32}} for ip in blacklisted_ips]
+            http_filters.append({
+                "name": "envoy.filters.http.rbac",
+                "typed_config": {
+                    "@type": "type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC",
+                    "rules": {
+                        "action": "DENY",
+                        "policies": {
+                            "global_blacklist": {
+                                "permissions": [{"any": True}],
+                                "principals": principals
+                            }
+                        }
+                    }
+                }
+            })
+
         if getattr(server, "rate_limit_enabled", False):
             http_filters.append({
                 "name": "envoy.filters.http.local_ratelimit",
@@ -196,7 +220,7 @@ def generate_lds(servers):
         listener["filter_chains"][0]["filters"][0]["typed_config"]["http_filters"] = http_filters
         
         if server.waf_mode != 'Disabled':
-            coraza_config = generate_coraza_config(server)
+            coraza_config = generate_coraza_config(server, whitelisted_ips)
             listener["filter_chains"][0]["filters"][0]["typed_config"]["http_filters"].append({
                 "name": "envoy.filters.http.wasm",
                 "typed_config": {
@@ -283,11 +307,17 @@ def get_crs_rules():
     _crs_rules_cache = loaded
     return _crs_rules_cache
 
-def generate_coraza_config(server):
+def generate_coraza_config(server, whitelisted_ips=None):
+    if whitelisted_ips is None: whitelisted_ips = []
     engine = 'DetectionOnly' if server.waf_mode == 'Logging' else 'On'
     directives = [
         "SecRuleEngine " + engine
     ]
+    
+    # Inject Global Whitelist
+    for idx, ip in enumerate(whitelisted_ips):
+        directives.append(f'SecRule REMOTE_ADDR "@ipMatch {ip}" "id:1000{idx},phase:1,nolog,allow,ctl:ruleEngine=Off,msg:\'IP Whitelist Bypass\'"')
+
     
     # Append all embedded CRS Rules inline
     directives.extend(get_crs_rules())
@@ -374,6 +404,9 @@ def generate_waf_lua():
 def trigger_envoy_update(db: Session):
     try:
         servers = db.query(database.VirtualServer).all()
+        blacklisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Blacklist).all()]
+        whitelisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Whitelist).all()]
+        
         cds_path = "/app/envoy-dynamic/cds.yaml"
         lds_path = "/app/envoy-dynamic/lds.yaml"
 
@@ -386,7 +419,7 @@ def trigger_envoy_update(db: Session):
         os.replace(cds_temp, cds_path)
             
         with open(lds_temp, 'w') as f:
-            f.write(generate_lds(servers))
+            f.write(generate_lds(servers, blacklisted_ips, whitelisted_ips))
         os.replace(lds_temp, lds_path)
             
         print("Envoy configuration successfully pushed via file-based xDS!")

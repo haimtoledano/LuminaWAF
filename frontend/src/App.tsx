@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Server, Activity, PlusCircle, X, Trash2, Shield, ShieldCheck, Terminal, ShieldAlert, ChevronDown, ChevronUp, AlertOctagon, LayoutTemplate, Cloud, Code, User, Users, Database, LogOut } from 'lucide-react';
 import { LoginView, MFASetupView } from './AuthViews';
 import UsersTab from './UsersTab';
+import IPRulesTab from './IPRulesTab';
 
 const ruleCategories = [
   { id: 'Protocol-Enforcement', label: 'Protocol Enforcement', desc: 'Enforces strict HTTP protocol standards.', icon: ShieldCheck },
@@ -30,7 +31,7 @@ const appCategories = [
 ];
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'servers'|'logs'|'users'>('servers');
+  const [activeTab, setActiveTab] = useState<'servers'|'logs'|'users'|'ip_rules'>('servers');
   const [authToken, setAuthToken] = useState<string | null>(localStorage.getItem('waf_token'));
   const [currentUser, setCurrentUser] = useState<any>(JSON.parse(localStorage.getItem('waf_user') || 'null'));
   const [mfaSetupUri, setMfaSetupUri] = useState<string | null>(null);
@@ -316,29 +317,34 @@ const App: React.FC = () => {
   return (
     <div className="flex flex-col items-center min-h-screen p-10 bg-gradient-to-br from-slate-900 to-indigo-950">
       <div className="flex items-center mb-6 w-full max-w-5xl justify-between border-b border-indigo-500/30 pb-4">
-        <div className="flex items-center space-x-4">
-          <img src="/cybershield_logo.png" alt="CyberShield Logo" className="h-14 w-14 object-contain shadow-indigo-500/50 drop-shadow-[0_0_15px_rgba(79,70,229,0.5)] rounded-2xl" />
-          <h1 className="text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 hidden md:block">
+        <div className="flex items-center space-x-3">
+          <img src="/cybershield_logo.png" alt="CyberShield Logo" className="h-10 w-10 object-contain shadow-indigo-500/50 drop-shadow-[0_0_15px_rgba(79,70,229,0.5)] rounded-xl" />
+          <h1 className="text-xl font-bold tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300 hidden md:block">
             CyberShield
           </h1>
         </div>
-        <div className="flex space-x-3 overflow-x-auto whitespace-nowrap custom-scrollbar pb-1">
-          <button onClick={() => setActiveTab('servers')} className={`flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition ${activeTab === 'servers' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
-            <Server className="w-5 h-5 flex-shrink-0 mr-2" /> Virtual Servers
+        <div className="flex space-x-2 overflow-x-auto whitespace-nowrap custom-scrollbar pb-1">
+          <button onClick={() => setActiveTab('servers')} className={`flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${activeTab === 'servers' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+            <Server className="w-4 h-4 flex-shrink-0 mr-1.5" /> Virtual Servers
           </button>
-          <button onClick={() => setActiveTab('logs')} className={`flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition ${activeTab === 'logs' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
-            <Terminal className="w-5 h-5 flex-shrink-0 mr-2" /> Traffic Logs
+          <button onClick={() => setActiveTab('logs')} className={`flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${activeTab === 'logs' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+            <Terminal className="w-4 h-4 flex-shrink-0 mr-1.5" /> Traffic Logs
           </button>
           {currentUser?.role === 'admin' && (
-            <button onClick={() => setActiveTab('users')} className={`flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
-              <Users className="w-5 h-5 flex-shrink-0 mr-2" /> Users
-            </button>
+            <>
+              <button onClick={() => setActiveTab('users')} className={`flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${activeTab === 'users' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                <Users className="w-4 h-4 flex-shrink-0 mr-1.5" /> Users
+              </button>
+              <button onClick={() => setActiveTab('ip_rules')} className={`flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition ${activeTab === 'ip_rules' ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>
+                <ShieldAlert className="w-4 h-4 flex-shrink-0 mr-1.5 text-red-400" /> IP Rules
+              </button>
+            </>
           )}
-          <button onClick={() => setIsProfileModalOpen(true)} className="flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition bg-slate-800 text-slate-400 hover:text-white">
-            <User className="w-5 h-5 flex-shrink-0 mr-2" /> My Profile
+          <button onClick={() => setIsProfileModalOpen(true)} className="flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-slate-800 text-slate-400 hover:text-white">
+            <User className="w-4 h-4 flex-shrink-0 mr-1.5" /> My Profile
           </button>
-          <button onClick={handleLogout} className="flex items-center flex-shrink-0 px-4 py-2 rounded-lg font-semibold transition bg-red-900/30 text-red-500 hover:bg-red-800 hover:text-white border border-red-500/30">
-            <LogOut className="w-5 h-5 flex-shrink-0 mr-2" /> Logout
+          <button onClick={handleLogout} className="flex items-center flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-semibold transition bg-red-900/30 text-red-500 hover:bg-red-800 hover:text-white border border-red-500/30">
+            <LogOut className="w-4 h-4 flex-shrink-0 mr-1.5" /> Logout
           </button>
         </div>
       </div>
@@ -512,6 +518,10 @@ const App: React.FC = () => {
 
         {activeTab === 'users' && currentUser?.role === 'admin' && (
             <UsersTab authToken={authToken} />
+        )}
+
+        {activeTab === 'ip_rules' && currentUser?.role === 'admin' && (
+            <IPRulesTab authToken={authToken} />
         )}
       </div>
 
