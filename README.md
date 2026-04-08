@@ -3,7 +3,6 @@
 **CyberShield** is an advanced, high-performance Web Application Firewall (WAF) Control Plane built for modern cloud and on-premise infrastructure. It deeply integrates an Envoy-based data plane with a robust Python/FastAPI backend and a premium React dashboard, delivering enterprise-grade web security management with ease.
 
 ![CyberShield Architecture Flow](assets/flow.png)
-![Virtual Servers Dashboard](assets/Virtual%20Servers.png)
 
 ## 🌟 Key Features
 
