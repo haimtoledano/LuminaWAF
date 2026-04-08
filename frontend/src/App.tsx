@@ -394,6 +394,11 @@ const App: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-end">
                       <div className="flex space-x-2">
+                        {currentUser?.role === 'admin' && !vs.active && (
+                            <button onClick={() => updateServerSettings(vs, { active: true })} className="flex items-center bg-green-600/80 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold transition shadow-[0_0_10px_rgba(34,197,94,0.3)] border border-green-500/50">
+                              <ShieldCheck className="w-4 h-4 mr-1"/> Reactivate
+                            </button>
+                        )}
                         {currentUser?.role === 'admin' && (
                             <button onClick={() => { setActiveServer(vs); setIsSettingsModalOpen(true); }} className="flex items-center bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition">
                               <Shield className="w-4 h-4 mr-1"/> WAF Settings

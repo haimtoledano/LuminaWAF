@@ -16,7 +16,9 @@
 * **Mandatory Multi-Factor Authentication (MFA)**: Uncompromising authentication flow ensuring robust protection of the control plane itself.
 * **Micro-second Envoy Proxy integration**: The backend translates UI configurations into Envoy's LDS/CDS mechanisms in real time.
 * **Bidirectional Custom Headers Integration**: Dynamically inject custom HTTP Request and Response headers seamlessly via Envoy's engine.
-* **Native DDoS Mitigation (Layer 7 Rate Limiting)**: Guard against flooding and brute-force by capping Requests Per Minute (RPM) independently for each requesting IP address using Envoy's native token bucket filter, saving WAF CPU cycles.
+* **Native DDoS Mitigation (Layer 7 & Active Defense)**: Block volumetric attacks by capping Requests Per Minute (RPM) per IP. Engine automatically provisions temporary DB/Proxy Blacklists (with configurable TTL) and dynamically isolates under-attack Virtual Servers via Kill-Switch.
+* **Enterprise SIEM Integration**: Forward live threat traffic log payloads directly to your Security Operations Center via native UDP Syslog forwarding.
+* **Audit & Alerting Engine**: Track every administrative modification and security override via the dedicated Audit Logging interface. Automated SMTP alerts notify operations teams during severe Layer 7 incidents.
 
 ## 📸 Screenshots
 
@@ -48,8 +50,8 @@ Take precise control over edge configurations without ever touching raw configur
 Review blocked packets, exact JSON payloads, and WAF intercepts organically.
 ![Logs and Audits](assets/logs.png)
 
-### 👥 Strict Access Control
-Manage user access and roles directly via the control plane.
+### 👥 Strict Access Control & Auditing
+Manage user access, review exhaustive administrative audit logs, and configure SMTP/Syslog systems globally.
 ![Users Management](assets/users.png)
 
 ## 🏗️ System Architecture & Traffic Flow
