@@ -428,9 +428,10 @@ const App: React.FC = () => {
                  </div>
              </div>
              <div className="flex text-slate-400 border-b border-slate-700 pb-2 mb-2 font-bold px-2">
-               <div className="w-48">TIMESTAMP</div>
+               <div className="w-24">TIMESTAMP</div>
+               <div className="w-32">CLIENT IP</div>
                <div className="w-24">METHOD</div>
-               <div className="w-48">SERVER</div>
+               <div className="w-40">SERVER</div>
                <div className="flex-1">PATH</div>
                <div className="w-24">STATUS</div>
              </div>
@@ -443,9 +444,10 @@ const App: React.FC = () => {
                    <React.Fragment key={logId}>
                      <div onClick={() => setExpandedLogId(expandedLogId === logId ? null : logId)} 
                           className={`flex items-center px-2 py-1.5 rounded cursor-pointer transition ${isBlocked ? 'bg-red-900/20 hover:bg-red-900/40 text-red-300' : 'hover:bg-slate-800 text-green-400'} border border-transparent hover:border-slate-700`}>
-                        <div className="w-48 text-slate-500">{new Date(log.time).toLocaleTimeString()}</div>
+                        <div className="w-24 text-slate-500">{new Date(log.time).toLocaleTimeString()}</div>
+                        <div className="w-32 font-mono text-slate-300">{log.client_ip || "-"}</div>
                         <div className="w-24 font-bold">{log.method}</div>
-                        <div className="w-48 text-blue-400">{log.server}</div>
+                        <div className="w-40 text-blue-400">{log.server}</div>
                         <div className="flex-1 truncate pr-4 text-slate-300">{log.path}</div>
                         <div className="w-32 flex items-center space-x-2">
                            <span className={isBlocked ? "font-bold" : "text-slate-400"}>{log.status}</span>
