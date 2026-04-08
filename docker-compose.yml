@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  envoy:
+    build: ./envoy
+    container_name: waf-envoy
+    volumes:
+      - ./envoy.yaml:/etc/envoy/envoy.yaml
+      - ./envoy-dynamic:/etc/envoy/dynamic
+    ports:
+      - "9901:9901"
+      - "8001-8010:8001-8010"
+
+  db:
+    image: postgres:16
+    container_name: waf-postgres
+    environment:
+      POSTGRES_USER: waf_admin
+      POSTGRES_PASSWORD: waf_password
+      POSTGRES_DB: waf_db
+    volumes:
+      - waf_db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+  waf-backend:
+    build: ./backend
+    container_name: waf-backend
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app
+      - ./envoy-dynamic:/app/envoy-dynamic
+    ports:
+      - "8555:8000"
+
+  waf-logger:
+    build: ./logger
+    container_name: waf-logger
+    restart: unless-stopped
+    depends_on:
+      - db
+    volumes:
+      - ./envoy-dynamic:/app/envoy-dynamic
+      - ./logger:/app
+    environment:
+      - DATABASE_URL=postgresql://waf_admin:waf_password@db:5432/waf_db
+
+  waf-frontend:
+    build: ./frontend
+    container_name: waf-frontend
+    ports:
+      - "5173:5173"
+
+volumes:
+  waf_db_data:
