@@ -22,6 +22,7 @@
 ### 🛡️ Authentication & MFA
 Secure login panel with mandatory MFA and logo branding.
 ![Login Screen](assets/login.png)
+![Login with MFA](assets/login%20with%20MFA.png)
 
 ### 🖥️ Virtual Servers Management
 Add and manage multiple virtual servers dynamically mapping to Envoy endpoints.
