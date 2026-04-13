@@ -5,11 +5,13 @@ type RequestOptions = RequestInit & {
 
 let authToken: string | null = localStorage.getItem('waf_token');
 let onAuthError: (() => void) | null = null;
+let tokenVersion = 0; // Track token changes to prevent stale-401 race conditions
 const BASE_URL = 'http://localhost:8555';
 
 export const api = {
     setToken: (token: string | null) => {
         authToken = token;
+        tokenVersion++; // Invalidate any in-flight requests using older tokens
         if (token) {
             localStorage.setItem('waf_token', token);
         } else {
@@ -44,6 +46,9 @@ export const api = {
             headers['Authorization'] = `Bearer ${authToken}`;
         }
 
+        // Capture the token version at request time so we can detect stale responses
+        const requestTokenVersion = tokenVersion;
+
         try {
             const response = await fetch(url.toString(), {
                 ...options,
@@ -51,7 +56,12 @@ export const api = {
             });
 
             if (response.status === 401 && !url.pathname.endsWith('/api/auth/login')) {
-                if (onAuthError) onAuthError();
+                // Only trigger auth error if the token hasn't been changed since this
+                // request was made. This prevents stale 401 responses (from old tokens)
+                // from logging out a user who just set a fresh valid token.
+                if (onAuthError && requestTokenVersion === tokenVersion) {
+                    onAuthError();
+                }
                 return response;
             }
 
