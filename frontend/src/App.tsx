@@ -79,6 +79,8 @@ const App: React.FC = () => {
       setAuthToken(null);
       setCurrentUser(null);
       setMfaSetupUri(null);
+      setNeedsMfaCode(false);
+      setLoginError(null);
       localStorage.removeItem('waf_token');
       localStorage.removeItem('waf_user');
   };
