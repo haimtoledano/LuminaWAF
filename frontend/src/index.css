@@ -5,8 +5,8 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 :root {
-  --lumina-glow-cyan: rgba(34, 211, 238, 0.4);
-  --lumina-glow-indigo: rgba(99, 102, 241, 0.4);
+  --lumina-glow-cyan: rgba(34, 211, 238, 0.5);
+  --lumina-glow-indigo: rgba(129, 140, 248, 0.5);
 }
 
 body {
@@ -22,7 +22,7 @@ body {
   width: 100%;
   height: 100%;
   z-index: -1;
-  background: radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%);
+  background: radial-gradient(circle at 50% 50%, #151e35 0%, #0c1222 100%);
   overflow: hidden;
 }
 
@@ -30,7 +30,7 @@ body {
   position: absolute;
   border-radius: 50%;
   filter: blur(120px);
-  opacity: 0.15;
+  opacity: 0.25;
   animation: float 20s ease-in-out infinite;
 }
 
@@ -62,17 +62,17 @@ body {
 
 /* Glassmorphism System */
 .glass-panel {
-  @apply bg-white/5 backdrop-blur-2xl border border-white/10 shadow-glass;
+  @apply bg-white/[0.08] backdrop-blur-2xl border border-white/[0.15] shadow-glass;
 }
 
 .glass-card {
-  @apply bg-slate-900/40 backdrop-blur-xl border border-white/5 shadow-2xl transition-all duration-300;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  @apply bg-slate-800/50 backdrop-blur-xl border border-white/[0.08] shadow-2xl transition-all duration-300;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-card:hover {
-  @apply border-white/20 bg-slate-900/60;
+  @apply border-white/25 bg-slate-800/70;
   transform: translateY(-2px);
 }
 
@@ -100,7 +100,7 @@ h1, h2, h3, h4 {
 }
 
 .nav-hud-item.active {
-  @apply bg-white/10 text-white shadow-[inset_0_0_15px_rgba(255,255,255,0.05)] border border-white/10;
+  @apply bg-white/[0.12] text-white shadow-[inset_0_0_20px_rgba(255,255,255,0.08)] border border-white/[0.15];
 }
 
 .nav-hud-item.active::after {
