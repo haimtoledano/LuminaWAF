@@ -6,8 +6,7 @@ type RequestOptions = RequestInit & {
 let authToken: string | null = localStorage.getItem('waf_token');
 let onAuthError: (() => void) | null = null;
 let tokenVersion = 0; // Track token changes to prevent stale-401 race conditions
-const BASE_URL = 'http://localhost:8555';
-
+const BASE_URL = import.meta.env?.VITE_API_URL || `http://${window.location.hostname}:8555`;
 export const api = {
     setToken: (token: string | null) => {
         authToken = token;
