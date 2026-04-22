@@ -250,6 +250,30 @@ const App: React.FC = () => {
     }
   };
 
+  const createCustomBlock = async (log: any, blockType: 'URL' | 'IP_URL' | 'IP') => {
+    if (!log.server) return;
+    const srv = servers.find(s => s.name === log.server);
+    if (!srv) return;
+    
+    const payload: any = { vs_id: srv.id, notes: `Quick block from logs` };
+    if (blockType === 'URL') {
+      payload.path_pattern = log.path;
+    } else if (blockType === 'IP_URL') {
+      payload.ip_address = log.client_ip;
+      payload.path_pattern = log.path;
+    } else if (blockType === 'IP') {
+      payload.ip_address = log.client_ip;
+      payload.vs_id = null; // IP blocks globally by default
+    }
+    
+    try {
+      await api.post('/api/custom-blocks/', payload);
+      fetchData();
+    } catch(e) {
+      console.error(e);
+    }
+  };
+
   const deleteExclusion = async (excId: string) => {
     try {
       await api.delete(`/api/exclusions/${excId}`);
@@ -565,11 +589,24 @@ const App: React.FC = () => {
                              </div>
                            </div>
                          )}
-                         {isBlocked && currentUser?.role === 'admin' && (
-                           <div className="flex justify-end pt-2 border-t border-slate-800">
-                             <button onClick={() => excludePath(log)} className="flex items-center bg-red-900/50 hover:bg-red-800 text-red-200 px-3 py-1 rounded text-xs transition">
-                                <AlertOctagon className="w-3 h-3 mr-1" /> Add Exclusion for path
-                             </button>
+                         {currentUser?.role === 'admin' && (
+                           <div className="flex justify-between items-center pt-3 mt-2 border-t border-slate-800">
+                             <div className="flex space-x-2">
+                               <button onClick={() => createCustomBlock(log, 'URL')} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded border border-slate-700 text-[10px] uppercase font-bold tracking-wider transition">
+                                 Block URL
+                               </button>
+                               <button onClick={() => createCustomBlock(log, 'IP_URL')} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded border border-slate-700 text-[10px] uppercase font-bold tracking-wider transition">
+                                 Block IP + URL
+                               </button>
+                               <button onClick={() => createCustomBlock(log, 'IP')} className="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded border border-slate-700 text-[10px] uppercase font-bold tracking-wider transition">
+                                 Block IP
+                               </button>
+                             </div>
+                             {isBlocked && (
+                               <button onClick={() => excludePath(log)} className="flex items-center bg-red-900/50 hover:bg-red-800 text-red-200 px-3 py-1.5 rounded text-xs transition border border-red-900/50">
+                                  <AlertOctagon className="w-3 h-3 mr-1" /> Add Exclusion for path
+                               </button>
+                             )}
                            </div>
                          )}
                        </div>

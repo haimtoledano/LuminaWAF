@@ -39,6 +39,15 @@ class IPRule(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
+class CustomBlock(Base):
+    __tablename__ = "custom_blocks"
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    vs_id = Column(String(36), ForeignKey('virtual_servers.id'), nullable=True)
+    ip_address = Column(String, nullable=True, index=True)
+    path_pattern = Column(String, nullable=True, index=True)
+    notes = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 class User(Base):
     __tablename__ = "users"
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))

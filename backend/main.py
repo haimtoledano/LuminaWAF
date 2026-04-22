@@ -19,10 +19,12 @@ app = FastAPI(title="WAF Control Plane API")
 import auth
 import users_router
 import ip_rules_router
+import custom_blocks_router
 
 app.include_router(auth.auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(users_router.users_router, prefix="/api/users", tags=["users"])
 app.include_router(ip_rules_router.ip_rules_router)
+app.include_router(custom_blocks_router.custom_blocks_router)
 
 @app.on_event("startup")
 def startup_event():
@@ -85,9 +87,10 @@ def generate_cds(servers):
         cds["resources"].append(cluster)
     return yaml.dump(cds, sort_keys=False)
 
-def generate_lds(servers, blacklisted_ips=None, whitelisted_ips=None):
+def generate_lds(servers, blacklisted_ips=None, whitelisted_ips=None, custom_blocks=None):
     if blacklisted_ips is None: blacklisted_ips = []
     if whitelisted_ips is None: whitelisted_ips = []
+    if custom_blocks is None: custom_blocks = []
     lds = {"resources": []}
     for server in servers:
         request_headers = [
@@ -130,6 +133,7 @@ def generate_lds(servers, blacklisted_ips=None, whitelisted_ips=None):
                             "virtual_hosts": [vhost]
                         },
                         "use_remote_address": True,
+                        "xff_num_trusted_hops": 1,
                         "forward_client_cert_details": "SANITIZE_SET",
                         "local_reply_config": {
                             "mappers": [
@@ -182,20 +186,40 @@ def generate_lds(servers, blacklisted_ips=None, whitelisted_ips=None):
 
         http_filters = []
         
+        rbac_policies = {}
+        
         if blacklisted_ips:
             principals = [{"direct_remote_ip": {"address_prefix": ip, "prefix_len": 32}} for ip in blacklisted_ips]
+            rbac_policies["global_blacklist"] = {
+                "permissions": [{"any": True}],
+                "principals": principals
+            }
+            
+        for block in custom_blocks:
+            if block.vs_id is not None and block.vs_id != str(server.id):
+                continue
+                
+            principals = [{"any": True}]
+            if block.ip_address:
+                principals = [{"direct_remote_ip": {"address_prefix": block.ip_address, "prefix_len": 32}}]
+                
+            permissions = [{"any": True}]
+            if block.path_pattern:
+                permissions = [{"url_path": {"path": {"exact": block.path_pattern}}}]
+                
+            rbac_policies[f"custom_block_{block.id}"] = {
+                "permissions": permissions,
+                "principals": principals
+            }
+
+        if rbac_policies:
             http_filters.append({
                 "name": "envoy.filters.http.rbac",
                 "typed_config": {
                     "@type": "type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC",
                     "rules": {
                         "action": "DENY",
-                        "policies": {
-                            "global_blacklist": {
-                                "permissions": [{"any": True}],
-                                "principals": principals
-                            }
-                        }
+                        "policies": rbac_policies
                     }
                 }
             })
@@ -422,6 +446,7 @@ def trigger_envoy_update(db: Session):
         servers = db.query(database.VirtualServer).all()
         blacklisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Blacklist).all()]
         whitelisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Whitelist).all()]
+        custom_blocks = db.query(database.CustomBlock).all()
         
         cds_path = "/app/envoy-dynamic/cds.yaml"
         lds_path = "/app/envoy-dynamic/lds.yaml"
@@ -435,7 +460,7 @@ def trigger_envoy_update(db: Session):
         os.replace(cds_temp, cds_path)
             
         with open(lds_temp, 'w') as f:
-            f.write(generate_lds(servers, blacklisted_ips, whitelisted_ips))
+            f.write(generate_lds(servers, blacklisted_ips, whitelisted_ips, custom_blocks))
         os.replace(lds_temp, lds_path)
             
         print("Envoy configuration successfully pushed via file-based xDS!")
