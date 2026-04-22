@@ -36,6 +36,7 @@ class IPRule(Base):
     ip_address = Column(String, index=True, nullable=False, unique=True)
     rule_type = Column(Enum(IPRuleType), nullable=False)
     notes = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     expires_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -46,6 +47,7 @@ class CustomBlock(Base):
     ip_address = Column(String, nullable=True, index=True)
     path_pattern = Column(String, nullable=True, index=True)
     notes = Column(String, nullable=True)
+    is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 class User(Base):

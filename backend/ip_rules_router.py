@@ -19,6 +19,7 @@ class IPRuleRead(BaseModel):
     ip_address: str
     rule_type: str
     notes: Optional[str] = None
+    is_active: bool = True
     created_at: datetime
 
 @ip_rules_router.get("/", response_model=List[IPRuleRead], summary="List all IP rules")
@@ -59,3 +60,25 @@ def delete_ip_rule(rule_id: str, db: Session = Depends(get_db), current_admin: U
     db.delete(rule)
     db.commit()
     return {"status": "deleted"}
+
+class IPRuleUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None
+    ip_address: Optional[str] = None
+
+@ip_rules_router.patch("/{rule_id}", response_model=IPRuleRead, summary="Update an IP rule")
+def update_ip_rule(rule_id: str, update_data: IPRuleUpdate, db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
+    rule = db.query(IPRule).filter(IPRule.id == rule_id).first()
+    if not rule:
+        raise HTTPException(status_code=404, detail="IP rule not found")
+        
+    if update_data.is_active is not None:
+        rule.is_active = update_data.is_active
+    if update_data.notes is not None:
+        rule.notes = update_data.notes
+    if update_data.ip_address is not None:
+        rule.ip_address = update_data.ip_address
+        
+    db.commit()
+    db.refresh(rule)
+    return rule

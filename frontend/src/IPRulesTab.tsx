@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShieldAlert, Plus, Trash2, Loader2, Info } from 'lucide-react';
+import { ShieldAlert, Plus, Trash2, Loader2, Info, Edit2, Power } from 'lucide-react';
 import { api } from './api';
 
 interface IPRule {
@@ -7,6 +7,7 @@ interface IPRule {
   ip_address: string;
   rule_type: 'Whitelist' | 'Blacklist';
   notes: string | null;
+  is_active?: boolean;
   created_at: string;
 }
 
@@ -16,6 +17,7 @@ interface CustomBlock {
   ip_address: string | null;
   path_pattern: string | null;
   notes: string | null;
+  is_active?: boolean;
   created_at: string;
 }
 
@@ -102,6 +104,50 @@ const IPRulesTab: React.FC<Props> = ({ authToken }) => {
       if (!response.ok) throw new Error('Delete failed');
       fetchRules();
       setMessage({ text: `Custom block deleted successfully.`, type: 'success' });
+    } catch (err: any) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
+  const handleToggleRule = async (id: string, currentStatus: boolean | undefined) => {
+    try {
+      const response = await api.patch(`/api/ip-rules/${id}`, { is_active: currentStatus !== false ? false : true });
+      if (!response.ok) throw new Error('Toggle failed');
+      fetchRules();
+    } catch (err: any) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
+  const handleEditRule = async (id: string, currentNotes: string | null) => {
+    const notes = window.prompt("Edit notes:", currentNotes || "");
+    if (notes === null) return;
+    try {
+      const response = await api.patch(`/api/ip-rules/${id}`, { notes });
+      if (!response.ok) throw new Error('Edit failed');
+      fetchRules();
+    } catch (err: any) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
+  const handleToggleCustomBlock = async (id: string, currentStatus: boolean | undefined) => {
+    try {
+      const response = await api.patch(`/api/custom-blocks/${id}`, { is_active: currentStatus !== false ? false : true });
+      if (!response.ok) throw new Error('Toggle failed');
+      fetchRules();
+    } catch (err: any) {
+      setMessage({ text: err.message, type: 'error' });
+    }
+  };
+
+  const handleEditCustomBlock = async (id: string, currentNotes: string | null) => {
+    const notes = window.prompt("Edit notes:", currentNotes || "");
+    if (notes === null) return;
+    try {
+      const response = await api.patch(`/api/custom-blocks/${id}`, { notes });
+      if (!response.ok) throw new Error('Edit failed');
+      fetchRules();
     } catch (err: any) {
       setMessage({ text: err.message, type: 'error' });
     }
@@ -199,7 +245,7 @@ const IPRulesTab: React.FC<Props> = ({ authToken }) => {
                   </tr>
                 ) : (
                   rules.map((rule) => (
-                    <tr key={rule.id} className="hover:bg-slate-700/30 transition-colors">
+                    <tr key={rule.id} className={`hover:bg-slate-700/30 transition-colors ${rule.is_active === false ? 'opacity-50' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold font-mono text-indigo-300">{rule.ip_address}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
                         <span className={`px-3 py-1 inline-flex text-xs leading-5 font-bold rounded-full border ${
@@ -216,8 +262,14 @@ const IPRulesTab: React.FC<Props> = ({ authToken }) => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                         {new Date(rule.created_at).toLocaleString()}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <button onClick={() => handleDeleteRule(rule.id, rule.ip_address)} className="text-red-400 hover:text-white transition bg-red-900/20 hover:bg-red-900/60 p-2 rounded-lg">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                        <button onClick={() => handleToggleRule(rule.id, rule.is_active)} className={`${rule.is_active === false ? 'text-green-400 bg-green-900/20 hover:bg-green-900/60' : 'text-slate-400 bg-slate-800 hover:bg-slate-700'} transition p-2 rounded-lg`} title={rule.is_active === false ? 'Enable' : 'Disable'}>
+                          <Power className="w-5 h-5 inline" />
+                        </button>
+                        <button onClick={() => handleEditRule(rule.id, rule.notes)} className="text-blue-400 hover:text-white transition bg-blue-900/20 hover:bg-blue-900/60 p-2 rounded-lg" title="Edit">
+                          <Edit2 className="w-5 h-5 inline" />
+                        </button>
+                        <button onClick={() => handleDeleteRule(rule.id, rule.ip_address)} className="text-red-400 hover:text-white transition bg-red-900/20 hover:bg-red-900/60 p-2 rounded-lg" title="Delete">
                           <Trash2 className="w-5 h-5 inline" />
                         </button>
                       </td>
@@ -251,13 +303,19 @@ const IPRulesTab: React.FC<Props> = ({ authToken }) => {
                   </tr>
                 ) : (
                   customBlocks.map((block) => (
-                    <tr key={block.id} className="hover:bg-slate-700/30 transition-colors">
+                    <tr key={block.id} className={`hover:bg-slate-700/30 transition-colors ${block.is_active === false ? 'opacity-50' : ''}`}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-bold font-mono text-indigo-300">{block.ip_address || 'ANY'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-yellow-300 font-mono">{block.path_pattern || 'ANY'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">{block.vs_id ? 'Specific VS' : 'Global'}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{block.notes || '-'}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                        <button onClick={() => handleDeleteCustomBlock(block.id)} className="text-red-400 hover:text-white transition bg-red-900/20 hover:bg-red-900/60 p-2 rounded-lg">
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                        <button onClick={() => handleToggleCustomBlock(block.id, block.is_active)} className={`${block.is_active === false ? 'text-green-400 bg-green-900/20 hover:bg-green-900/60' : 'text-slate-400 bg-slate-800 hover:bg-slate-700'} transition p-2 rounded-lg`} title={block.is_active === false ? 'Enable' : 'Disable'}>
+                          <Power className="w-5 h-5 inline" />
+                        </button>
+                        <button onClick={() => handleEditCustomBlock(block.id, block.notes)} className="text-blue-400 hover:text-white transition bg-blue-900/20 hover:bg-blue-900/60 p-2 rounded-lg" title="Edit">
+                          <Edit2 className="w-5 h-5 inline" />
+                        </button>
+                        <button onClick={() => handleDeleteCustomBlock(block.id)} className="text-red-400 hover:text-white transition bg-red-900/20 hover:bg-red-900/60 p-2 rounded-lg" title="Delete">
                           <Trash2 className="w-5 h-5 inline" />
                         </button>
                       </td>

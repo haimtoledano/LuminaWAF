@@ -21,6 +21,7 @@ class CustomBlockRead(BaseModel):
     ip_address: Optional[str] = None
     path_pattern: Optional[str] = None
     notes: Optional[str] = None
+    is_active: bool = True
     created_at: datetime
     
     class Config:
@@ -57,5 +58,29 @@ def delete_custom_block(rule_id: str, db: Session = Depends(get_db), current_adm
         
     db.delete(rule)
     db.commit()
-    
     return {"status": "deleted"}
+
+class CustomBlockUpdate(BaseModel):
+    is_active: Optional[bool] = None
+    notes: Optional[str] = None
+    ip_address: Optional[str] = None
+    path_pattern: Optional[str] = None
+
+@custom_blocks_router.patch("/{rule_id}", response_model=CustomBlockRead, summary="Update a custom block")
+def update_custom_block(rule_id: str, update_data: CustomBlockUpdate, db: Session = Depends(get_db), current_admin: User = Depends(require_admin)):
+    rule = db.query(CustomBlock).filter(CustomBlock.id == rule_id).first()
+    if not rule:
+        raise HTTPException(status_code=404, detail="Custom block not found")
+        
+    if update_data.is_active is not None:
+        rule.is_active = update_data.is_active
+    if update_data.notes is not None:
+        rule.notes = update_data.notes
+    if update_data.ip_address is not None:
+        rule.ip_address = update_data.ip_address
+    if update_data.path_pattern is not None:
+        rule.path_pattern = update_data.path_pattern
+        
+    db.commit()
+    db.refresh(rule)
+    return rule

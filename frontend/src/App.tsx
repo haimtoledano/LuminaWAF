@@ -396,7 +396,7 @@ const App: React.FC = () => {
                 <Users className="w-4 h-4 mr-2" /> Users
               </button>
               <button onClick={() => setActiveTab('ip_rules')} className={buttonStyle(activeTab === 'ip_rules')}>
-                <ShieldAlert className="w-4 h-4 mr-2 text-red-500" /> IP Rules
+                <ShieldAlert className="w-4 h-4 mr-2 text-red-500" /> Rules
               </button>
               <button onClick={() => setActiveTab('audit_logs')} className={buttonStyle(activeTab === 'audit_logs')}>
                 <ClipboardList className="w-4 h-4 mr-2" /> Audit Logs

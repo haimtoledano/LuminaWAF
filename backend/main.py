@@ -13,6 +13,17 @@ import asyncio
 
 # Create tables
 database.Base.metadata.create_all(bind=database.engine)
+with database.engine.begin() as conn:
+    try: conn.execute(text("ALTER TABLE ip_rules ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
+    except Exception: pass
+    try: conn.execute(text("ALTER TABLE custom_blocks ADD COLUMN is_active BOOLEAN DEFAULT TRUE"))
+    except Exception: pass
+    
+    # Just in case for existing nulls
+    try: conn.execute(text("UPDATE ip_rules SET is_active = TRUE WHERE is_active IS NULL"))
+    except Exception: pass
+    try: conn.execute(text("UPDATE custom_blocks SET is_active = TRUE WHERE is_active IS NULL"))
+    except Exception: pass
 
 app = FastAPI(title="WAF Control Plane API")
 
@@ -444,9 +455,9 @@ def generate_waf_lua(server):
 def trigger_envoy_update(db: Session):
     try:
         servers = db.query(database.VirtualServer).all()
-        blacklisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Blacklist).all()]
-        whitelisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Whitelist).all()]
-        custom_blocks = db.query(database.CustomBlock).all()
+        blacklisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Blacklist, database.IPRule.is_active == True).all()]
+        whitelisted_ips = [r.ip_address for r in db.query(database.IPRule).filter(database.IPRule.rule_type == database.IPRuleType.Whitelist, database.IPRule.is_active == True).all()]
+        custom_blocks = db.query(database.CustomBlock).filter(database.CustomBlock.is_active == True).all()
         
         cds_path = "/app/envoy-dynamic/cds.yaml"
         lds_path = "/app/envoy-dynamic/lds.yaml"
