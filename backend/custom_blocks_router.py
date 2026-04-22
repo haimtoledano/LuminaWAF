@@ -6,7 +6,6 @@ from datetime import datetime
 
 from database import get_db, CustomBlock, User
 from auth import require_admin
-import requests
 
 custom_blocks_router = APIRouter(prefix="/api/custom-blocks", tags=["Custom Blocks"])
 
